@@ -1,16 +1,20 @@
-import bpy
-import os
-
 bl_info = {
     # required
     "name": "Synty to Godot",
-    "blender": (3, 14, 0),
-    "category": "Object",
+    "blender": (3, 4, 1),
+    "category": "Import-Export",
     # optional
     "version": (1, 0, 0),
-    "author": "FleMo",
+    "author": "Florian Hammer",
     "description": "Cleaning up and prepare Synty assets for the godot engine",
+    "doc_url": "https://github.com/FleMo93/blender-synty-characters-to-godot",
+    "support": "COMMUNITY",
+    "location": "Sidebar > Misc"
 }
+
+import bpy
+import os
+import re
 
 single_fbx_import_filename = ""
 
@@ -62,9 +66,9 @@ def export_gltf(filepath):
 
 class CLEANUP_PROPS(bpy.types.PropertyGroup):
     source: bpy.props.StringProperty(
-        default="G:\\Eigene Dateien\\Projekte\\Godot\\Synty-Assets\\Synty_POLYGON_FantasyKingdom\\Characters\\")
+        default="")
     target: bpy.props.StringProperty(
-        default="G:\\Eigene Dateien\\Projekte\\Godot\\Synty-Assets\\Synty_POLYGON_FantasyKingdom\\GLTF\\")
+        default="")
     custom_normals: bpy.props.BoolProperty(default=False)
     single_fbx_import_filename: bpy.props.StringProperty(default="hi")
 
@@ -140,13 +144,15 @@ class SINGLE_EXPORT_GLTF_OPERATOR(bpy.types.Operator):
     filename = bpy.props.StringProperty()
 
     def invoke(self, context, event):
-        self.filename = bpy.context.scene.CleanupProps.single_fbx_import_filename
-        print(self.filename)
+        self.filepath = re.sub(
+            r".fbx$",
+            ".glb",
+            bpy.context.scene.CleanupProps.single_fbx_import_filename)
         context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-        # export_gltf(bpy.types.Scene.CleanupProps.single_fbx_import_filename)
+        export_gltf(self.filepath)
         return {"FINISHED"}
 
 
