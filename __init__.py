@@ -1,3 +1,8 @@
+from . import clean_scene
+import re
+import os
+import bpy
+
 bl_info = {
     # required
     "name": "Synty to Godot",
@@ -12,9 +17,6 @@ bl_info = {
     "location": "Sidebar > Misc"
 }
 
-import bpy
-import os
-import re
 
 single_fbx_import_filename = ""
 
@@ -69,7 +71,7 @@ class CLEANUP_PROPS(bpy.types.PropertyGroup):
         default="")
     target: bpy.props.StringProperty(
         default="")
-    custom_normals: bpy.props.BoolProperty(default=False)
+    custom_normals: bpy.props.BoolProperty(default=True)
     single_fbx_import_filename: bpy.props.StringProperty(default="hi")
 
 
@@ -100,10 +102,24 @@ class BATCH_CLEANUP_OPERATOR(bpy.types.Operator):
         for filename in os.listdir(directory):
             if not filename.endswith(".fbx"):
                 continue
-            f = os.path.join(directory, filename)
-            # bpy.ops.wm.read_homefile(use_empty=True)
-            import_fbx(f, bpy.context.scene.CleanupProps.custom_normals)
+            clean_scene.clean_scene()
+            source_file = os.path.join(directory, filename)
+            import_fbx(
+                source_file, bpy.context.scene.CleanupProps.custom_normals)
+            target_file = os.path.join(bpy.context.scene.CleanupProps.target, filename)
+            target_file = re.sub(r".fbx$", ".glb", target_file)
             cleanup_current_character()
+            print("Export: " + target_file)
+            export_gltf(target_file)
+        return {"FINISHED"}
+
+
+class SINGLE_CLEAN_SCENE(bpy.types.Operator):
+    bl_idname = "opr.single_clean_scene"
+    bl_label = "Clean scene"
+
+    def execute(self, context):
+        clean_scene.clean_scene()
         return {"FINISHED"}
 
 
@@ -152,6 +168,7 @@ class SINGLE_EXPORT_GLTF_OPERATOR(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
+        print("Export: " + self.filepath)
         export_gltf(self.filepath)
         return {"FINISHED"}
 
@@ -192,18 +209,21 @@ class MAINPANEL(bpy.types.Panel):
         col_main.label(text="Single")
         col_single = col_main.column()
 
+        col_single.operator("opr.single_clean_scene",
+                            text="Clean scene")
         col_single.operator("opr.single_fbx_import_operator",
                             text="Import fbx")
         col_single.operator("opr.cleanup_operator",
                             text="Cleanup current character")
         col_single.operator("opr.export_gltf_operator",
-                            text="Export gltf")
+                            text="Export gLTF")
 
 
 classes = (
     CLEANUP_PROPS,
     DIRECTORY_PICKER_OPERATOR,
     BATCH_CLEANUP_OPERATOR,
+    SINGLE_CLEAN_SCENE,
     SINGLE_FBX_IMPORT_OPERATOR,
     SINGLE_CLEANUP_OPERATOR,
     SINGLE_EXPORT_GLTF_OPERATOR,
