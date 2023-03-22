@@ -46,6 +46,11 @@ def cleanup_current_character():
     delete_bone("ik_foot_root")
     delete_bone("ik_foot_l")
     delete_bone("ik_foot_r")
+
+    armature.edit_bones["Pelvis"].head.z = armature.edit_bones["Pelvis"].tail.z
+
+    bpy.ops.armature.select_all(action='SELECT')
+    bpy.ops.armature.roll_clear(roll=0.0)
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
